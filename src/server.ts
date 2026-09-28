@@ -14,7 +14,7 @@ export function createMcpServer(customDir?: string) {
   const server = new Server(
     {
       name: 'dialectic-mcp',
-      version: '4.0.0',
+      version: '4.0.1',
     },
     {
       capabilities: {
@@ -23,7 +23,7 @@ export function createMcpServer(customDir?: string) {
     }
   );
 
-  // 1. 列出可用的 4 个标准工具
+  // 1. 列出可用的 5 个标准工具
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
       tools: [
@@ -92,6 +92,10 @@ export function createMcpServer(customDir?: string) {
               attribution: {
                 type: 'string',
                 description: '归因说明 (选择 external_disruption 外部干扰时必须详细举证突发因果)',
+              },
+              correctionReason: {
+                type: 'string',
+                description: '更正归因理由 (若该留痕此前已完成核销结案，二次变更必须提供更正原因以供审计留痕，严禁静默篡改战绩)',
               },
             },
             required: ['id', 'resolution'],
@@ -191,6 +195,7 @@ export function createMcpServer(customDir?: string) {
           id: z.string().min(1),
           resolution: z.enum(['verified', 'falsified', 'insufficient_sample', 'unimplemented', 'external_disruption']),
           attribution: z.string().optional(),
+          correctionReason: z.string().optional(),
         });
 
         const parsed = schema.parse(args);

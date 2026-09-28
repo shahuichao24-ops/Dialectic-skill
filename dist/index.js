@@ -4,7 +4,7 @@ import {
   ProductScout,
   createMcpServer,
   runMcpServer
-} from "./chunk-ABNRUFFQ.js";
+} from "./chunk-3QB2UP64.js";
 export {
   LedgerStore,
   ProductScout,

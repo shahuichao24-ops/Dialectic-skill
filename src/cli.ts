@@ -98,7 +98,7 @@ async function main() {
 
       fs.writeFileSync(mcpJsonPath, JSON.stringify(mcpConfig, null, 2), 'utf-8');
       console.log(`\n✅ 成功在当前目录配置 Cursor MCP: ${mcpJsonPath}`);
-      console.log(`\n提示：重启 Cursor 或在 Agent 面板中刷新，即可自动加载 dialectic_* 4 大工具！\n`);
+      console.log(`\n提示：重启 Cursor 或在 Agent 面板中刷新，即可自动加载 dialectic_* 5 大工具！\n`);
     } catch (err: any) {
       console.log(`\n无法自动写入配置: ${err.message}`);
       console.log(`\n你可以手动将以下配置填入 .cursor/mcp.json 或 Claude Desktop 配置中：\n`);

@@ -3,7 +3,7 @@ import {
   LedgerStore,
   ProductScout,
   runMcpServer
-} from "./chunk-ABNRUFFQ.js";
+} from "./chunk-3QB2UP64.js";
 
 // src/cli.ts
 import fs from "fs";
@@ -94,7 +94,7 @@ async function main() {
       console.log(`
 \u2705 \u6210\u529F\u5728\u5F53\u524D\u76EE\u5F55\u914D\u7F6E Cursor MCP: ${mcpJsonPath}`);
       console.log(`
-\u63D0\u793A\uFF1A\u91CD\u542F Cursor \u6216\u5728 Agent \u9762\u677F\u4E2D\u5237\u65B0\uFF0C\u5373\u53EF\u81EA\u52A8\u52A0\u8F7D dialectic_* 4 \u5927\u5DE5\u5177\uFF01
+\u63D0\u793A\uFF1A\u91CD\u542F Cursor \u6216\u5728 Agent \u9762\u677F\u4E2D\u5237\u65B0\uFF0C\u5373\u53EF\u81EA\u52A8\u52A0\u8F7D dialectic_* 5 \u5927\u5DE5\u5177\uFF01
 `);
     } catch (err) {
       console.log(`

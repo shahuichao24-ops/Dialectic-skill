@@ -4,13 +4,15 @@
   "description": "Deterministic MCP Server & CLI Engine for Dialectic (驳真)",
   "type": "module",
   "bin": {
-    "dialectic": "./dist/cli.js"
+    "dialectic": "./dist/cli.js",
+    "dialectic-mcp": "./dist/cli.js"
   },
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "start": "node ./dist/cli.js"
+    "start": "node ./dist/cli.js",
+    "test": "node test/eval-runner.mjs"
   },
   "keywords": [
     "dialectic",

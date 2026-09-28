@@ -5,9 +5,9 @@
     <sub>投入前做一次极限压力测试，到期后让时间裁决输赢。</sub>
   </p>
   <p align="center">
-    <img src="https://img.shields.io/badge/version-4.0-black?style=flat-square" alt="v4.0">
+    <img src="https://img.shields.io/badge/version-4.0.1-black?style=flat-square" alt="v4.0.1">
     <img src="https://img.shields.io/badge/mcp-supported-brightgreen?style=flat-square" alt="MCP Supported">
-    <img src="https://img.shields.io/badge/platforms-Cursor%20%7C%20Claude%20Code%20%7C%20Antigravity%20%7C%20ChatGPT-blue?style=flat-square" alt="Platforms">
+    <img src="https://img.shields.io/badge/platforms-Cursor%20%7C%20Claude%20Code%20%7C%20Antigravity%20%7C%20Web%20Fallback-blue?style=flat-square" alt="Platforms">
     <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT">
   </p>
   <p align="center">
@@ -81,12 +81,21 @@
 
 ---
 
-## 快速上手
+## 快速上手与运行模式
+
+驳真支持两种运行形态，根据你的使用环境自由选择：
+
+- **全功能模式 (推荐 · 脑身一体)**：配置 MCP Server，AI 模型自动排查坏账 (Step 0)、原子化落盘留痕桩、自动到期提醒与对账核销。
+- **纯文本手动模式 (无环境依赖)**：在 ChatGPT 网页版或无本地权限的环境中，直接复制 [`SKILL.md`](SKILL.md) 作为 Prompt 使用，AI 会自动降级为标准 Markdown 留痕桩文本块，由你手动存取。
 
 ### 1. 终端随时看 AI 战绩 (它是真准还是在吹牛？)
-在 Mac 终端敲一行命令，查验 AI 过去到底是被打脸多，还是命中多：
+在终端敲一行命令，查验 AI 过去到底是被打脸多，还是命中多：
 ```bash
+# 方式 A：npm 免安装运行
 npx dialectic-mcp board
+
+# 方式 B：本地源码编译运行
+npm run build && node ./dist/cli.js board
 ```
 
 ```
@@ -94,26 +103,63 @@ npx dialectic-mcp board
 │                   🛡️  DIALECTIC · 驳真战绩看板                 │
 └──────────────────────────────────────────────────────────────┘
   📁 账本路径: ~/.dialectic
-  🕒 系统时间: 2026-09-24 17:55
+  🕒 系统时间: 2026-09-28 16:00
 
-  【AI 预测与打脸记录】
+  【实战预测概览】
   - 待观察预测 (Active Pending)   : 1 条
   - 逾期待开箱 (Overdue Unbox)    : 0 条 ✅
-  - 预测命中率 (Hit Rate)        : - (真实胜率统计，杜绝胡说八道)
+  - 已归档结案 (Archived Total)   : 0 条
+
+  【统计科学看板】
+  - 累计归档总样本               : 0
+  - 有效结案样本 (命中 + 失误)   : 0 (早期积累期，置信区间过宽)
+  - 预测命中率 (Hit Rate)        : -
+  - 验证命中次数                 : 0
+  - 预测失误次数 (打脸记录)      : 0
+  - 方案未执行率                 : 0.0% (0 次)
+  - 外部干扰率                   : 0.0% (0 次)
+  - 样本不足率                   : 0.0% (0 次)
 ```
 
-### 2. 查查竞品踩过什么坑
+### 2. 查查竞品踩过什么坑 (内置 SSRF 安全防御)
 输入任何一个竞品网址，1 秒把对方的功能和定价扒得干干净净，本地 0 内存开销：
 ```bash
 npx dialectic-mcp scout https://example.com
 ```
 
-### 3. 在 Cursor / Claude Code / 反重力中使用
-敲一行自动为当前项目生成配置：
+### 3. 在 Cursor / Claude Code / Antigravity 中使用
+敲一行自动为当前项目生成 MCP 配置：
 ```bash
 npx dialectic-mcp init
 ```
-把 [`SKILL.md`](SKILL.md) 放入技能库或 `.cursorrules` 中，直接在聊天框里像平时说话一样使用！
+把 [`SKILL.md`](SKILL.md) 放入技能库（如 `~/.gemini/antigravity/builtin/skills/`）或 `.cursorrules` 中，直接在聊天框里像平时说话一样发起决策压力测试！
+
+---
+
+## 🛠️ MCP 5 大标准工具矩阵
+
+| 工具名称 | 触发时机 | 核心职责 |
+|---|---|---|
+| `dialectic_check_debts` | **【Step 0 必备】** 启动审查前 | 自动比对时钟，排查本地待观察与逾期未结案留痕桩，防坏账掩盖 |
+| `dialectic_record_prediction` | 用户提出“打个赌 / 立字据” | 记录核心预测、观察窗口、输赢边界与触发动作，并执行写后回读校验 |
+| `dialectic_reconcile_debt` | 到期对账或复盘时 | 核销结案历史留痕，内置防静默覆盖机制与追加式审计日志 |
+| `dialectic_get_stats` | 用户询问战绩或胜率 | 统计真实有效命中率、分母剔除指标及统计置信区间 |
+| `dialectic_scout_product` | 嗅探竞品网页事实 | 0 内存轻量提炼高纯 Markdown 正文，内置 SSRF 内网安全隔离门禁 |
+
+---
+
+## 🧪 自动化评测与质量保障
+
+驳真拒绝“全是打勾的伪评测”，自带一套 23 项自动化可执行评测套件（Clean-Room 隔离运行，不污染真实台账）：
+
+```bash
+# 执行全量自动化评测
+npm test
+```
+
+- **台账状态机与完整性**：验证分母科学剔除、逾期时钟比对、外部干扰强制因果举证、防篡改门禁拦截与审计日志记录、双向 Markdown 字段解析兼容性。
+- **SSRF 安全防护**：验证严格封锁 `127.0.0.1`、`localhost`、`169.254.169.254`（云元数据）、私有内网段（`10.0.0.0/8`、`172.16.0.0/12`、`192.168.0.0/16`）及非 HTTP 协议。
+- **脑身契约自洽性**：自动化静态 Lint 工具，保证 `SKILL.md`、`server.ts`、`evals`、`package.json` 全链路命名、门禁编号与版本号强一致。
 
 ---
 
@@ -121,8 +167,10 @@ npx dialectic-mcp init
 
 > **Adversarial product decision review framework. Stress-test in 30 seconds, settle the score in 30 days.**
 
-- **Fast Decision**: 30-second stress-test, competitor facts, hard truths, and low-cost fallbacks.
-- **Accountable Bets**: Challenge the AI with "bet 30 days" to log predictions. If you succeed, prove the AI wrong and log a strike on its record.
+- **Brain & Body Architecture**: Powered by cognitive disciplines in `SKILL.md` (3-tier legal citations, honesty declarations, innovation sandboxes) and deterministic state machines in TypeScript MCP Server.
+- **Fast Decision**: 30-second stress-test, automatic competitor scouting, hard truths, and low-cost fallbacks.
+- **Accountable Bets**: Challenge the AI with "bet 30 days" to log predictions into local tamper-proof ledgers (`~/.dialectic/ledger.md`).
+- **Deterministic MCP Tools**: 5 tools covering Step 0 debt checks, predictions, reconciliations, statistical board, and SSRF-safe competitor scouting.
 
 ---
 

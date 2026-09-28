@@ -2,6 +2,12 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
 type LensType = 'friction' | 'necessity' | 'compliance';
 type ResolutionStatus = 'verified' | 'falsified' | 'insufficient_sample' | 'unimplemented' | 'external_disruption';
+interface AuditRecord {
+    previousResolution: ResolutionStatus | 'unverified';
+    newResolution: ResolutionStatus;
+    changedAt: string;
+    reason: string;
+}
 interface LedgerEntry {
     id: string;
     status: 'pending' | 'resolved';
@@ -15,6 +21,7 @@ interface LedgerEntry {
     resolution: ResolutionStatus | 'unverified';
     attribution: string;
     resolvedAt?: string;
+    auditLog?: AuditRecord[];
 }
 interface LedgerData {
     version: number;
@@ -69,6 +76,7 @@ declare class LedgerStore {
         id: string;
         resolution: ResolutionStatus;
         attribution?: string;
+        correctionReason?: string;
     }): LedgerEntry;
     getStats(): LedgerStats;
 }
@@ -128,6 +136,10 @@ declare class ProductScout {
     private timeoutMs;
     constructor(timeoutMs?: number);
     /**
+     * SSRF 防护校验：禁止访问私有内网、本地回环及云厂商元数据服务
+     */
+    private validateUrlSecurity;
+    /**
      * 嗅探并提取指定产品/竞品网页的核心内容与结构化 Markdown
      * 策略：默认优先原生直连提取 (100% 独立、无依赖、防封锁)，若配置了 JINA_API_KEY 则走增强通道
      */
@@ -147,4 +159,4 @@ declare class ProductScout {
     private scoutViaJina;
 }
 
-export { type LedgerData, type LedgerEntry, type LedgerStats, LedgerStore, type LensType, ProductScout, type ResolutionStatus, type ScoutResult, createMcpServer, runMcpServer };
+export { type AuditRecord, type LedgerData, type LedgerEntry, type LedgerStats, LedgerStore, type LensType, ProductScout, type ResolutionStatus, type ScoutResult, createMcpServer, runMcpServer };

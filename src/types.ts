@@ -7,6 +7,13 @@ export type ResolutionStatus =
   | 'unimplemented'         // 方案未执行 (后来改变主意没做，本次不算)
   | 'external_disruption';  // 外部干扰 (遇到了突发意外阻断因果链)
 
+export interface AuditRecord {
+  previousResolution: ResolutionStatus | 'unverified';
+  newResolution: ResolutionStatus;
+  changedAt: string;           // ISO 8601
+  reason: string;              // 审计更正理由
+}
+
 export interface LedgerEntry {
   id: string;
   status: 'pending' | 'resolved';
@@ -20,6 +27,7 @@ export interface LedgerEntry {
   resolution: ResolutionStatus | 'unverified';
   attribution: string;         // 归因说明 (外部干扰时必填因果细节)
   resolvedAt?: string;         // 核销时间 (ISO 8601)
+  auditLog?: AuditRecord[];    // 审计修改留痕（杜绝静默篡改战绩）
 }
 
 export interface LedgerData {

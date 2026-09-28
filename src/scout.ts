@@ -20,6 +20,81 @@ export class ProductScout {
   }
 
   /**
+   * SSRF 防护校验：禁止访问私有内网、本地回环及云厂商元数据服务
+   */
+  private validateUrlSecurity(url: URL): void {
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      throw new Error(`安全拦截：仅支持 HTTP 或 HTTPS 协议链接 (${url.protocol})`);
+    }
+
+    const hostname = url.hostname.toLowerCase();
+
+    // 1. 本地回环与内网常见域名后缀
+    if (
+      hostname === 'localhost' ||
+      hostname.endsWith('.localhost') ||
+      hostname.endsWith('.local') ||
+      hostname.endsWith('.internal') ||
+      hostname.endsWith('.lan') ||
+      hostname === '127.0.0.1' ||
+      hostname === '0.0.0.0' ||
+      hostname === '::1' ||
+      hostname === '[::1]'
+    ) {
+      throw new Error(`安全拦截：禁止访问本地回环或局域网地址 (${hostname})`);
+    }
+
+    // 2. 云厂商元数据服务 (AWS, GCP, Azure, 阿里云等 169.254.169.254)
+    if (hostname === '169.254.169.254' || hostname.startsWith('169.254.')) {
+      throw new Error(`安全拦截：禁止访问云厂商实例元数据地址 (${hostname})`);
+    }
+
+    // 3. IPv4 私有内网地址段 (RFC 1918 & RFC 6598)
+    const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ipv4Match) {
+      const octet1 = parseInt(ipv4Match[1], 10);
+      const octet2 = parseInt(ipv4Match[2], 10);
+
+      // 10.0.0.0/8
+      if (octet1 === 10) {
+        throw new Error(`安全拦截：禁止访问 10.0.0.0/8 私有内网网段 (${hostname})`);
+      }
+      // 127.0.0.0/8
+      if (octet1 === 127) {
+        throw new Error(`安全拦截：禁止访问 127.0.0.0/8 回环网段 (${hostname})`);
+      }
+      // 172.16.0.0/12
+      if (octet1 === 172 && octet2 >= 16 && octet2 <= 31) {
+        throw new Error(`安全拦截：禁止访问 172.16.0.0/12 私有内网网段 (${hostname})`);
+      }
+      // 192.168.0.0/16
+      if (octet1 === 192 && octet2 === 168) {
+        throw new Error(`安全拦截：禁止访问 192.168.0.0/16 私有局域网网段 (${hostname})`);
+      }
+      // 100.64.0.0/10 (运营商级 NAT)
+      if (octet1 === 100 && octet2 >= 64 && octet2 <= 127) {
+        throw new Error(`安全拦截：禁止访问 100.64.0.0/10 运营商级内网网段 (${hostname})`);
+      }
+      // 0.0.0.0/8
+      if (octet1 === 0) {
+        throw new Error(`安全拦截：禁止访问 0.0.0.0/8 特殊网段 (${hostname})`);
+      }
+    }
+
+    // 4. IPv6 私有与链路本地地址段 (fc00::/7, fe80::/10)
+    if (
+      hostname.startsWith('[fc') ||
+      hostname.startsWith('[fd') ||
+      hostname.startsWith('[fe8') ||
+      hostname.startsWith('[fe9') ||
+      hostname.startsWith('[fea') ||
+      hostname.startsWith('[feb')
+    ) {
+      throw new Error(`安全拦截：禁止访问 IPv6 私有或链路本地地址 (${hostname})`);
+    }
+  }
+
+  /**
    * 嗅探并提取指定产品/竞品网页的核心内容与结构化 Markdown
    * 策略：默认优先原生直连提取 (100% 独立、无依赖、防封锁)，若配置了 JINA_API_KEY 则走增强通道
    */
@@ -30,6 +105,9 @@ export class ProductScout {
     } catch {
       throw new Error(`无效的 URL 格式: ${targetUrl}`);
     }
+
+    // 执行严格的 SSRF 安全防御校验
+    this.validateUrlSecurity(validUrl);
 
     // 优先尝试原生独立抓取与提炼
     try {

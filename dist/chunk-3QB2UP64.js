@@ -89,7 +89,7 @@ var LedgerStore = class {
         const windowMatch = block.match(/- 观察窗口：\s*([^\n\r]+)/);
         const failureMatch = block.match(/- 输赢边界：\s*([^\n\r]+)/);
         const actionMatch = block.match(/- 触发动作：\s*([^\n\r]+)/);
-        const resMatch = block.match(/- 对账结果：\s*([^\n\r]+)/);
+        const resMatch = block.match(/- (?:对账结果|对账状态)：\s*([^\n\r]+)/);
         const attrMatch = block.match(/- 归因说明：\s*([^\n\r]+)/);
         if (idMatch && targetMatch && predMatch) {
           const id = idMatch[1].trim();
@@ -156,6 +156,12 @@ var LedgerStore = class {
       ];
       if (e.resolvedAt) {
         lines.push(`- \u6838\u9500\u65F6\u95F4\uFF1A${e.resolvedAt.replace("T", " ").slice(0, 16)}`);
+      }
+      if (e.auditLog && e.auditLog.length > 0) {
+        const auditLines = e.auditLog.map(
+          (a) => `${a.changedAt.replace("T", " ").slice(0, 16)} \u7531 ${a.previousResolution} \u66F4\u6B63\u4E3A ${a.newResolution} (\u539F\u56E0: ${a.reason})`
+        );
+        lines.push(`- \u5BA1\u8BA1\u66F4\u6B63\u8BB0\u5F55\uFF1A${auditLines.join("; ")}`);
       }
       return lines.join("\n");
     };
@@ -233,6 +239,11 @@ var LedgerStore = class {
     };
     data.entries.push(newEntry);
     this.saveData(data);
+    const verifiedData = this.loadData();
+    const found = verifiedData.entries.find((e) => e.id === newEntry.id);
+    if (!found || found.prediction !== newEntry.prediction) {
+      throw new Error(`[\u53F0\u8D26\u5B8C\u6574\u6027\u9519\u8BEF] \u7559\u75D5\u8BB0\u5F55 ${newEntry.id} \u5199\u540E\u56DE\u8BFB\u6821\u9A8C\u5931\u8D25\uFF0C\u6570\u636E\u672A\u80FD\u6210\u529F\u843D\u76D8\uFF01`);
+    }
     return newEntry;
   }
   // 核销旧账
@@ -245,11 +256,32 @@ var LedgerStore = class {
     if (params.resolution === "external_disruption" && (!params.attribution || params.attribution.trim() === "none")) {
       throw new Error(`\u9009\u62E9\u201C\u5916\u90E8\u5E72\u6270\u201D\u65F6\u5FC5\u987B\u63D0\u4F9B\u5177\u4F53\u7684\u7A81\u53D1\u56E0\u679C\u963B\u65AD\u8BF4\u660E`);
     }
+    if (targetEntry.status === "resolved") {
+      if (!params.correctionReason || params.correctionReason.trim() === "") {
+        throw new Error(
+          `[\u9632\u7BE1\u6539\u62E6\u622A] \u7559\u75D5\u8BB0\u5F55 ${params.id} \u5DF2\u4E8E ${targetEntry.resolvedAt || "\u6B64\u524D"} \u6838\u9500\u7ED3\u6848\u4E3A\u3010${targetEntry.resolution}\u3011\u3002\u7981\u6B62\u76F4\u63A5\u9759\u9ED8\u8986\u76D6\u51C6\u786E\u7387\uFF01\u82E5\u786E\u7CFB\u4E8B\u5B9E\u66F4\u6B63\uFF0C\u5FC5\u987B\u63D0\u4F9B correctionReason (\u66F4\u6B63\u5F52\u56E0\u7406\u7531) \u4EE5\u4FDD\u7559\u5BA1\u8BA1\u7559\u75D5\u3002`
+        );
+      }
+      if (!targetEntry.auditLog) {
+        targetEntry.auditLog = [];
+      }
+      targetEntry.auditLog.push({
+        previousResolution: targetEntry.resolution,
+        newResolution: params.resolution,
+        changedAt: (/* @__PURE__ */ new Date()).toISOString(),
+        reason: params.correctionReason.trim()
+      });
+    }
     targetEntry.status = "resolved";
     targetEntry.resolution = params.resolution;
-    targetEntry.attribution = params.attribution || "none";
+    targetEntry.attribution = params.attribution || targetEntry.attribution || "none";
     targetEntry.resolvedAt = (/* @__PURE__ */ new Date()).toISOString();
     this.saveData(data);
+    const verifiedData = this.loadData();
+    const found = verifiedData.entries.find((e) => e.id === params.id);
+    if (!found || found.resolution !== params.resolution) {
+      throw new Error(`[\u53F0\u8D26\u5B8C\u6574\u6027\u9519\u8BEF] \u7559\u75D5\u8BB0\u5F55 ${params.id} \u6838\u9500\u5199\u540E\u56DE\u8BFB\u6821\u9A8C\u5931\u8D25\uFF01`);
+    }
     return targetEntry;
   }
   // 计算严密的看板统计指标
@@ -309,6 +341,47 @@ var ProductScout = class {
     this.timeoutMs = timeoutMs;
   }
   /**
+   * SSRF 防护校验：禁止访问私有内网、本地回环及云厂商元数据服务
+   */
+  validateUrlSecurity(url) {
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      throw new Error(`\u5B89\u5168\u62E6\u622A\uFF1A\u4EC5\u652F\u6301 HTTP \u6216 HTTPS \u534F\u8BAE\u94FE\u63A5 (${url.protocol})`);
+    }
+    const hostname = url.hostname.toLowerCase();
+    if (hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".local") || hostname.endsWith(".internal") || hostname.endsWith(".lan") || hostname === "127.0.0.1" || hostname === "0.0.0.0" || hostname === "::1" || hostname === "[::1]") {
+      throw new Error(`\u5B89\u5168\u62E6\u622A\uFF1A\u7981\u6B62\u8BBF\u95EE\u672C\u5730\u56DE\u73AF\u6216\u5C40\u57DF\u7F51\u5730\u5740 (${hostname})`);
+    }
+    if (hostname === "169.254.169.254" || hostname.startsWith("169.254.")) {
+      throw new Error(`\u5B89\u5168\u62E6\u622A\uFF1A\u7981\u6B62\u8BBF\u95EE\u4E91\u5382\u5546\u5B9E\u4F8B\u5143\u6570\u636E\u5730\u5740 (${hostname})`);
+    }
+    const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ipv4Match) {
+      const octet1 = parseInt(ipv4Match[1], 10);
+      const octet2 = parseInt(ipv4Match[2], 10);
+      if (octet1 === 10) {
+        throw new Error(`\u5B89\u5168\u62E6\u622A\uFF1A\u7981\u6B62\u8BBF\u95EE 10.0.0.0/8 \u79C1\u6709\u5185\u7F51\u7F51\u6BB5 (${hostname})`);
+      }
+      if (octet1 === 127) {
+        throw new Error(`\u5B89\u5168\u62E6\u622A\uFF1A\u7981\u6B62\u8BBF\u95EE 127.0.0.0/8 \u56DE\u73AF\u7F51\u6BB5 (${hostname})`);
+      }
+      if (octet1 === 172 && octet2 >= 16 && octet2 <= 31) {
+        throw new Error(`\u5B89\u5168\u62E6\u622A\uFF1A\u7981\u6B62\u8BBF\u95EE 172.16.0.0/12 \u79C1\u6709\u5185\u7F51\u7F51\u6BB5 (${hostname})`);
+      }
+      if (octet1 === 192 && octet2 === 168) {
+        throw new Error(`\u5B89\u5168\u62E6\u622A\uFF1A\u7981\u6B62\u8BBF\u95EE 192.168.0.0/16 \u79C1\u6709\u5C40\u57DF\u7F51\u7F51\u6BB5 (${hostname})`);
+      }
+      if (octet1 === 100 && octet2 >= 64 && octet2 <= 127) {
+        throw new Error(`\u5B89\u5168\u62E6\u622A\uFF1A\u7981\u6B62\u8BBF\u95EE 100.64.0.0/10 \u8FD0\u8425\u5546\u7EA7\u5185\u7F51\u7F51\u6BB5 (${hostname})`);
+      }
+      if (octet1 === 0) {
+        throw new Error(`\u5B89\u5168\u62E6\u622A\uFF1A\u7981\u6B62\u8BBF\u95EE 0.0.0.0/8 \u7279\u6B8A\u7F51\u6BB5 (${hostname})`);
+      }
+    }
+    if (hostname.startsWith("[fc") || hostname.startsWith("[fd") || hostname.startsWith("[fe8") || hostname.startsWith("[fe9") || hostname.startsWith("[fea") || hostname.startsWith("[feb")) {
+      throw new Error(`\u5B89\u5168\u62E6\u622A\uFF1A\u7981\u6B62\u8BBF\u95EE IPv6 \u79C1\u6709\u6216\u94FE\u8DEF\u672C\u5730\u5730\u5740 (${hostname})`);
+    }
+  }
+  /**
    * 嗅探并提取指定产品/竞品网页的核心内容与结构化 Markdown
    * 策略：默认优先原生直连提取 (100% 独立、无依赖、防封锁)，若配置了 JINA_API_KEY 则走增强通道
    */
@@ -319,6 +392,7 @@ var ProductScout = class {
     } catch {
       throw new Error(`\u65E0\u6548\u7684 URL \u683C\u5F0F: ${targetUrl}`);
     }
+    this.validateUrlSecurity(validUrl);
     try {
       return await this.scoutDirect(validUrl.toString());
     } catch (directErr) {
@@ -435,7 +509,7 @@ function createMcpServer(customDir) {
   const server = new Server(
     {
       name: "dialectic-mcp",
-      version: "4.0.0"
+      version: "4.0.1"
     },
     {
       capabilities: {
@@ -507,6 +581,10 @@ function createMcpServer(customDir) {
               attribution: {
                 type: "string",
                 description: "\u5F52\u56E0\u8BF4\u660E (\u9009\u62E9 external_disruption \u5916\u90E8\u5E72\u6270\u65F6\u5FC5\u987B\u8BE6\u7EC6\u4E3E\u8BC1\u7A81\u53D1\u56E0\u679C)"
+              },
+              correctionReason: {
+                type: "string",
+                description: "\u66F4\u6B63\u5F52\u56E0\u7406\u7531 (\u82E5\u8BE5\u7559\u75D5\u6B64\u524D\u5DF2\u5B8C\u6210\u6838\u9500\u7ED3\u6848\uFF0C\u4E8C\u6B21\u53D8\u66F4\u5FC5\u987B\u63D0\u4F9B\u66F4\u6B63\u539F\u56E0\u4EE5\u4F9B\u5BA1\u8BA1\u7559\u75D5\uFF0C\u4E25\u7981\u9759\u9ED8\u7BE1\u6539\u6218\u7EE9)"
               }
             },
             required: ["id", "resolution"]
@@ -599,7 +677,8 @@ function createMcpServer(customDir) {
         const schema = z.object({
           id: z.string().min(1),
           resolution: z.enum(["verified", "falsified", "insufficient_sample", "unimplemented", "external_disruption"]),
-          attribution: z.string().optional()
+          attribution: z.string().optional(),
+          correctionReason: z.string().optional()
         });
         const parsed = schema.parse(args);
         const reconciled = store.reconcileDebt(parsed);

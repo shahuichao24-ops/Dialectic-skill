@@ -104,7 +104,7 @@ export class LedgerStore {
         const windowMatch = block.match(/- 观察窗口：\s*([^\n\r]+)/);
         const failureMatch = block.match(/- 输赢边界：\s*([^\n\r]+)/);
         const actionMatch = block.match(/- 触发动作：\s*([^\n\r]+)/);
-        const resMatch = block.match(/- 对账结果：\s*([^\n\r]+)/);
+        const resMatch = block.match(/- (?:对账结果|对账状态)：\s*([^\n\r]+)/);
         const attrMatch = block.match(/- 归因说明：\s*([^\n\r]+)/);
 
         if (idMatch && targetMatch && predMatch) {
@@ -177,6 +177,12 @@ export class LedgerStore {
       ];
       if (e.resolvedAt) {
         lines.push(`- 核销时间：${e.resolvedAt.replace('T', ' ').slice(0, 16)}`);
+      }
+      if (e.auditLog && e.auditLog.length > 0) {
+        const auditLines = e.auditLog.map(
+          (a) => `${a.changedAt.replace('T', ' ').slice(0, 16)} 由 ${a.previousResolution} 更正为 ${a.newResolution} (原因: ${a.reason})`
+        );
+        lines.push(`- 审计更正记录：${auditLines.join('; ')}`);
       }
       return lines.join('\n');
     };
@@ -279,6 +285,14 @@ export class LedgerStore {
 
     data.entries.push(newEntry);
     this.saveData(data);
+
+    // 写后回读校验 (Read-after-write verification)
+    const verifiedData = this.loadData();
+    const found = verifiedData.entries.find((e) => e.id === newEntry.id);
+    if (!found || found.prediction !== newEntry.prediction) {
+      throw new Error(`[台账完整性错误] 留痕记录 ${newEntry.id} 写后回读校验失败，数据未能成功落盘！`);
+    }
+
     return newEntry;
   }
 
@@ -287,6 +301,7 @@ export class LedgerStore {
     id: string;
     resolution: ResolutionStatus;
     attribution?: string;
+    correctionReason?: string;
   }): LedgerEntry {
     const data = this.loadData();
     const targetEntry = data.entries.find((e) => e.id === params.id);
@@ -299,12 +314,40 @@ export class LedgerStore {
       throw new Error(`选择“外部干扰”时必须提供具体的突发因果阻断说明`);
     }
 
+    // 防篡改防护门禁：若已被核销结案，禁止静默二次改写覆盖准确率！
+    if (targetEntry.status === 'resolved') {
+      if (!params.correctionReason || params.correctionReason.trim() === '') {
+        throw new Error(
+          `[防篡改拦截] 留痕记录 ${params.id} 已于 ${targetEntry.resolvedAt || '此前'} 核销结案为【${targetEntry.resolution}】。禁止直接静默覆盖准确率！若确系事实更正，必须提供 correctionReason (更正归因理由) 以保留审计留痕。`
+        );
+      }
+
+      // 记录审计留痕
+      if (!targetEntry.auditLog) {
+        targetEntry.auditLog = [];
+      }
+      targetEntry.auditLog.push({
+        previousResolution: targetEntry.resolution,
+        newResolution: params.resolution,
+        changedAt: new Date().toISOString(),
+        reason: params.correctionReason.trim(),
+      });
+    }
+
     targetEntry.status = 'resolved';
     targetEntry.resolution = params.resolution;
-    targetEntry.attribution = params.attribution || 'none';
+    targetEntry.attribution = params.attribution || targetEntry.attribution || 'none';
     targetEntry.resolvedAt = new Date().toISOString();
 
     this.saveData(data);
+
+    // 写后回读校验
+    const verifiedData = this.loadData();
+    const found = verifiedData.entries.find((e) => e.id === params.id);
+    if (!found || found.resolution !== params.resolution) {
+      throw new Error(`[台账完整性错误] 留痕记录 ${params.id} 核销写后回读校验失败！`);
+    }
+
     return targetEntry;
   }
 
