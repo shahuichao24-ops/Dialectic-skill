@@ -24,7 +24,7 @@
 
 **驳真 (Dialectic) 是一个专为你挑方案死穴的“AI 挑刺合伙人”。**
 
-就像苹果在产品立项时反复推敲“这个东西到底该不该存在”一样——驳真在你在写下第一行代码、投入研发资源之前，对你的方案做一次**极限压力测试**。
+就像苹果在产品立项时反复推敲“这个东西到底该不该存在”一样——驳真在你写下第一行代码、投入研发资源之前，对你的方案做一次**极限压力测试**。
 
 - **拒绝无脑捧场**：主流的大模型几乎全是“奉承大师”，无论你说什么都回答“太棒了”；驳真不当应声虫，它会像挑剔的设计评审一样，直接指出你的方案最薄弱的死穴。
 - **好方案大方放行**：对低成本、高确定性的好方案直接放行 (`PASS`)，绝不为了显摆深刻而无病呻吟。
@@ -43,7 +43,7 @@
 | 🏢 **方案上会与跨部门评审** | 方案要推给领导或跨部门评审，心里没底 | 站在利益受损者视角刁钻推演：“动了谁的奶酪”、“出事谁背锅”，备齐所有应对退路。 |
 | 🧪 **全新概念无先例探索** | 全新交互或创意，市面上缺乏现成数据参考 | 启动【创新沙盒】，不因缺乏数据一棍子打死，给出 1/10 成本的最小验证闭环。 |
 
-> ⚠️ **严禁使用场景（自动退出）**：常规文档审校、找错别字、代码审查 (Code Review)、写具体代码。遇到这些直接退出，按普通助理干活。
+> ⚠️ **严禁使用场景（自动退出）**：常规文档审校、找错别字、代码审查 (Code Review)、写具体代码。遇到这些会直接退出，交由常规通用助理处理。
 
 ---
 
@@ -62,8 +62,9 @@
 # 1. 克隆并编译
 git clone https://github.com/shahuichao24-ops/Dialectic-skill.git
 cd Dialectic-skill && npm install && npm run build
+npm link                           # 可选：全局注册 dialectic 终端命令
 
-# 2. 常用命令
+# 2. 常用命令（亦可使用全局 dialectic <命令>）
 node ./dist/cli.js init            # 自动为当前项目生成 Cursor MCP 配置
 node ./dist/cli.js board --card    # 查看 AI 预测命中率与对决看板
 node ./dist/cli.js dossier <ID>    # 导出单页【方案压力测试备忘录】(可直接贴入 PRD 决策章节)
@@ -116,8 +117,9 @@ For local deterministic tracking, tamper-proof state machines, and terminal dash
 # 1. Clone & Build
 git clone https://github.com/shahuichao24-ops/Dialectic-skill.git
 cd Dialectic-skill && npm install && npm run build
+npm link                           # Optional: globally link the `dialectic` command
 
-# 2. CLI Commands
+# 2. CLI Commands (or use global `dialectic <command>`)
 node ./dist/cli.js init            # Generate Cursor MCP configuration
 node ./dist/cli.js board --card    # View hit-rate battle cards
 node ./dist/cli.js dossier <ID>    # Export a 1-page Stress-Test Memo (pasteable into PRDs)
