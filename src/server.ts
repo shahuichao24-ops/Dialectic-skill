@@ -203,9 +203,9 @@ export function createMcpServer(customDir?: string) {
 
         let impactMessage = '';
         if (reconciled.resolution === 'falsified') {
-          impactMessage = `\n🎉 【打脸成功】你成功推翻了 AI 蓝军的保守推演！AI 命中率看板已记录 1 次打脸（勇者胜）。`;
+          impactMessage = `\n🎉 【打脸成功】你成功推翻了 AI 的保守推演！AI 命中率看板已记录 1 次打脸（勇者胜）。`;
         } else if (reconciled.resolution === 'verified') {
-          impactMessage = `\n🛡️ 【避坑命中】蓝军预警命中！本次决策推演成功提前标记了潜在暗礁。`;
+          impactMessage = `\n🛡️ 【避坑命中】压力测试预警命中！本次决策推演成功提前标记了潜在暗礁。`;
         } else if (reconciled.resolution === 'external_disruption') {
           impactMessage = `\n⚡ 【外部干扰归档】突发因果阻断已留痕，客观剔除分母，不影响战绩统计。`;
         } else if (reconciled.resolution === 'unimplemented') {

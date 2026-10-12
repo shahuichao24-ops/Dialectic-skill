@@ -3,7 +3,7 @@ import {
   LedgerStore,
   ProductScout,
   runMcpServer
-} from "./chunk-WYBE7ZVB.js";
+} from "./chunk-7Y6RXDMO.js";
 
 // src/cli.ts
 import fs from "fs";
@@ -29,7 +29,7 @@ async function main() {
 \u2502                                                              \u2502
 \u2502  \u{1F525} \u7D2F\u8BA1\u51B3\u7B56\u8FC7\u62DB : ${String(stats.total).padEnd(4)} \u6761                                 \u2502
 \u2502  \u{1F389} \u6210\u529F\u6253\u8138 AI  : ${String(stats.falsified).padEnd(4)} \u6B21 (\u7A81\u7834\u4FDD\u5B88\u63A8\u6F14\uFF0C\u52C7\u8005\u80DC)             \u2502
-\u2502  \u{1F6E1}\uFE0F \u84DD\u519B\u907F\u5751\u547D\u4E2D : ${String(stats.verified).padEnd(4)} \u6B21 (\u63D0\u524D\u6807\u8BB0\u5E76\u62E6\u622A\u6697\u7901)             \u2502
+\u2502  \u{1F6E1}\uFE0F \u9884\u8B66\u907F\u5751\u547D\u4E2D : ${String(stats.verified).padEnd(4)} \u6B21 (\u63D0\u524D\u6807\u8BB0\u5E76\u62E6\u622A\u6697\u7901)             \u2502
 \u2502  \u{1F381} \u5F85\u5F00\u7BB1\u76F2\u76D2   : ${String(stats.overdue).padEnd(4)} \u6761 (\u5230\u671F\u7B49\u5F85\u63ED\u6653)                   \u2502
 \u2502                                                              \u2502
 \u2502  \u{1F4CA} AI \u7EFC\u5408\u547D\u4E2D\u7387: ${stats.hitRate !== null ? `${stats.hitRate.toFixed(1)}%` : "-"}                                    \u2502
@@ -195,9 +195,9 @@ ${doc}
 
 \u4F7F\u7528\u65B9\u6CD5:
   dialectic [mcp]           \u542F\u52A8 MCP Server (\u4F9B Cursor / Claude Code \u8FDE\u63A5)
-  dialectic board [--card]  \u67E5\u770B\u5B9E\u6218\u9884\u6D4B\u547D\u4E2D\u7387\u4E0E\u6218\u7EE9\u770B\u677F (\u52A0 --card \u8F93\u51FA\u5BF9\u51B3\u6218\u62A5)
+  dialectic board [--card]  \u67E5\u770B\u5B9E\u6218\u9884\u6D4B\u547D\u4E2D\u7387\u4E0E\u5BF9\u51B3\u770B\u677F (\u52A0 --card \u8F93\u51FA\u5BF9\u51B3\u5361\u7247)
   dialectic list            \u5217\u51FA\u5F85\u89C2\u5BDF\u4E0E\u903E\u671F\u7559\u75D5\u6E05\u5355
-  dialectic dossier <ID>    \u5BFC\u51FA\u6307\u5B9A\u65B9\u6848\u7684 1 \u9875\u3010\u84DD\u519B\u5BF9\u6297\u5BA1\u67E5\u7EAA\u8981\u3011
+  dialectic dossier <ID>    \u5BFC\u51FA\u6307\u5B9A\u65B9\u6848\u7684 1 \u9875\u3010\u65B9\u6848\u538B\u529B\u6D4B\u8BD5\u5907\u5FD8\u5F55\u3011
   dialectic scout <URL>     \u96F6\u5185\u5B58\u8F7B\u91CF\u55C5\u63A2\u7ADE\u54C1\u6216\u4EA7\u54C1\u7F51\u9875\u60C5\u62A5
   dialectic init            \u81EA\u52A8\u5728\u5F53\u524D\u5DE5\u7A0B\u914D\u7F6E Cursor MCP
   dialectic --help          \u67E5\u770B\u5E2E\u52A9

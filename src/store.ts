@@ -420,7 +420,7 @@ export class LedgerStore {
     }
 
     const lines = [
-      `# 🛡️ 蓝军对抗审查纪要 (Decision Dossier)`,
+      `# 🛡️ 方案压力测试备忘录 (Decision Dossier)`,
       ``,
       `> 方案名称：**${entry.target}**  `,
       `> 留痕编号：\`${entry.id}\` ｜ 审查时间：${entry.createdAt.replace('T', ' ').slice(0, 16)} ｜ 观察窗口：至 ${entry.windowEnd}`,

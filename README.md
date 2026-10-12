@@ -22,24 +22,26 @@
 
 ### 1. 是什么？
 
-**驳真 (Dialectic) 是一个专为你挑方案死穴的“AI 蓝军陪练”。**
+**驳真 (Dialectic) 是一个专为你挑方案死穴的“AI 挑刺合伙人”。**
 
-- **不拍马屁**：普通的 AI 总在奉承顺从你的点子；驳真不替你拍板，而是在你写代码、投入资源前，拼尽全力朝你的方案挥拳，帮你找出最脆弱的下巴。
-- **好方案大方放行**：对低成本、高确定性的好方案直接通过 (PASS)，绝不为了显摆深刻而无病呻吟。
-- **否定必给生路**：指出风险时，必须给出花 1/10 成本试水的备选方案，绝不只管否定不管解决。
-- **敢说敢认立字据**：随手回一句“打个赌 7天”，AI 自动把预测记在小本本上，到期拉你一起看谁被时间打脸。
+就像苹果在产品立项时反复推敲“这个东西到底该不该存在”一样——驳真在你在写下第一行代码、投入研发资源之前，对你的方案做一次**极限压力测试**。
+
+- **拒绝无脑捧场**：主流的大模型几乎全是“奉承大师”，无论你说什么都回答“太棒了”；驳真不当应声虫，它会像挑剔的设计评审一样，直接指出你的方案最薄弱的死穴。
+- **好方案大方放行**：对低成本、高确定性的好方案直接放行 (`PASS`)，绝不为了显摆深刻而无病呻吟。
+- **否定必给生路**：如果否定你的方案，必须给出一个仅需 1/10 成本试水的备选方案，绝不只挑刺不给解法。
+- **立字据对赌验证**：随手回复一句“打个赌 7天”，AI 就会立下预测契约；观察期结束后，一起回头看看当初究竟谁被时间打脸。
 
 ---
 
 ### 2. 使用场景是什么？
 
-只专注一个核心问题：**拍板方向或功能的“做不做”**。
+它只帮你回答一个最昂贵的问题：**“这个需求/功能，到底做不做？”**
 
-| 场景 | 典型痛点 | 驳真能帮你做什么 |
+| 场景 | 典型困境 | 驳真能帮你做什么 |
 |---|---|---|
-| 🛠️ **独立开发防自嗨** | 突然冒出个点子想做个复杂功能（如打卡积分系统） | 30 秒泼冷水，深扒竞品差评，测出是不是伪需求，省下两周无效编码。 |
-| 🏢 **B端方案上会排雷** | 方案要推给领导或跨部门评审，心里没底 | 从“谁吃亏（组织阻力）”、“出事谁背锅（合规红线）”刁钻拷问，备齐所有退路。 |
-| 🧪 **全新概念摸索** | 前所未有的新交互，市面上没有现成竞品数据 | 启动【创新沙盒】，不因缺乏数据盲目打死，给出 1/10 成本最小验证闭环。 |
+| 🛠️ **独立开发防自嗨** | 突然冒出个点子想做个复杂功能（如打卡积分系统） | 30 秒泼冷水，深扒竞品真实差评，测出是不是伪需求，省下两周无效编码。 |
+| 🏢 **方案上会与跨部门评审** | 方案要推给领导或跨部门评审，心里没底 | 站在利益受损者视角刁钻推演：“动了谁的奶酪”、“出事谁背锅”，备齐所有应对退路。 |
+| 🧪 **全新概念无先例探索** | 全新交互或创意，市面上缺乏现成数据参考 | 启动【创新沙盒】，不因缺乏数据一棍子打死，给出 1/10 成本的最小验证闭环。 |
 
 > ⚠️ **严禁使用场景（自动退出）**：常规文档审校、找错别字、代码审查 (Code Review)、写具体代码。遇到这些直接退出，按普通助理干活。
 
@@ -51,7 +53,7 @@
 **不需要装任何环境，10 秒搞定：**
 1. 打开本仓库的 [`SKILL.md`](SKILL.md)，复制全部文本；
 2. 粘贴到你的 **Cursor Rules**、**Claude Project**、**ChatGPT 自定义指令** 或 **Antigravity 技能库** 中；
-3. 平时像说话一样提问（例如：*“我想在小工具里加个每日打卡功能提高日活，帮我压力测试一下”*），立刻开始审查！
+3. 平时像说话一样提问（例如：*“我想在小工具里加个每日打卡功能提高日活，帮我做个方案压力测试”*），立刻开始审查！
 
 #### 方式 B：本地极客 & MCP 增强（全自动记账与战绩看板）
 如果你想体验本地自动排查逾期坏账、自动落盘防篡改台账与命令行看板：
@@ -63,8 +65,8 @@ cd Dialectic-skill && npm install && npm run build
 
 # 2. 常用命令
 node ./dist/cli.js init            # 自动为当前项目生成 Cursor MCP 配置
-node ./dist/cli.js board --card    # 查看 AI 战绩与对决战报卡片
-node ./dist/cli.js dossier <ID>    # 导出单页【蓝军审查纪要】(可直接贴入 PRD 决策章节)
+node ./dist/cli.js board --card    # 查看 AI 预测命中率与对决看板
+node ./dist/cli.js dossier <ID>    # 导出单页【方案压力测试备忘录】(可直接贴入 PRD 决策章节)
 node ./dist/cli.js scout <URL>     # 嗅探竞品网页核心正文 (内置 SSRF 内网安全隔离)
 ```
 
@@ -74,23 +76,25 @@ node ./dist/cli.js scout <URL>     # 嗅探竞品网页核心正文 (内置 SSRF
 
 ### 1. What is it?
 
-**Dialectic is an adversarial "Blue-Team Sparring Partner" AI designed to stress-test your product decisions.**
+**Dialectic is an adversarial "Idea Challenger" AI designed to stress-test your product decisions.**
 
-- **No Yes-Men Flattery**: Mainstream LLMs are sycophantic praise machines. Dialectic doesn't make decisions for you; instead, it punches hard at your proposal before you commit resources, exposing its most vulnerable blind spots.
-- **PASS Gate for Good Ideas**: Approves low-cost, high-conviction ideas with a clear `PASS`. No bikeshedding for the sake of looking smart.
-- **Mandatory Fallback**: Every rejection must come with a 1/10-cost low-risk alternative.
-- **Accountable Bets**: Reply "bet 7 days", and the AI logs a tamper-proof prediction into a local ledger. When due, settle the score to see who was right.
+Just like Steve Jobs challenging every feature with *"Why does this matter?"* — Dialectic puts your proposals through an uncompromising **stress test** before you write a single line of code or burn engineering hours.
+
+- **No Sycophantic Flattery**: Mainstream LLMs are echo chambers that praise every idea. Dialectic refuses to be a yes-man; it acts like a rigorous design reviewer, exposing the fatal blind spots in your plan.
+- **Clear Approval for Good Ideas**: Approves low-cost, high-conviction ideas with an immediate `PASS`. No bikeshedding just to look smart.
+- **Mandatory Fallback**: Every rejection must come with a 1/10-cost low-risk alternative. Never just a "no" without a way forward.
+- **Accountable Bets**: Simply reply *"bet 7 days"*, and Dialectic logs a falsifiable prediction into your local ledger. When the window ends, see whether the AI or your intuition was right.
 
 ---
 
 ### 2. When to use it?
 
-Dialectic focuses strictly on one core decision: **"Should we build this, or not?"**
+Dialectic focuses strictly on the single most expensive question in product building: **"Should we build this, or not?"**
 
 | Scenario | Pain Point | How Dialectic Helps |
 |---|---|---|
 | 🛠️ **Solo Indie Hackers** | Falling in love with vanity features (e.g., daily check-in points). | 30-second cold-water test. Digs into competitor user complaints to prevent weeks of wasted coding. |
-| 🏢 **B2B Product Reviews** | Unsure if a proposal will survive stakeholder meetings. | Stresses "Friction" (who bears extra burden?) and "Compliance" (who takes the blame?), preparing solid defenses. |
+| 🏢 **B2B Product Reviews** | Unsure if a proposal will survive stakeholder meetings. | Stresses "Friction" (who bears the burden?) and "Compliance" (who takes the blame?), preparing solid defenses. |
 | 🧪 **Zero-to-One Concepts** | Brand-new interactions with zero market data available. | Activates the "Innovation Sandbox" to design a 1/10-cost experiment without prematurely killing innovation. |
 
 > ⚠️ **Out of Scope (Auto-Exit)**: Proofreading, Code Review, bug fixing, or writing implementation code. The framework exits immediately to standard assistant mode.
@@ -105,7 +109,7 @@ Dialectic focuses strictly on one core decision: **"Should we build this, or not
 2. Paste it into your **Cursor Rules**, **Claude Project Instructions**, **ChatGPT Custom Instructions**, or **Antigravity Skills**;
 3. Ask your idea naturally (e.g., *"I want to add a daily streak system to my desktop tool, stress-test it for me"*).
 
-#### Method B: Local CLI & MCP Engine (Automated Ledger & Battle Cards)
+#### Method B: Local CLI & MCP Engine (Automated Ledger & Dashboards)
 For local deterministic tracking, tamper-proof state machines, and terminal dashboards:
 
 ```bash
@@ -116,7 +120,7 @@ cd Dialectic-skill && npm install && npm run build
 # 2. CLI Commands
 node ./dist/cli.js init            # Generate Cursor MCP configuration
 node ./dist/cli.js board --card    # View hit-rate battle cards
-node ./dist/cli.js dossier <ID>    # Export a 1-page Blue Team Brief (pasteable into PRDs)
+node ./dist/cli.js dossier <ID>    # Export a 1-page Stress-Test Memo (pasteable into PRDs)
 node ./dist/cli.js scout <URL>     # Extract competitor facts (with SSRF security)
 ```
 

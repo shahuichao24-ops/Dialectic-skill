@@ -259,7 +259,7 @@ try {
     fs.rmSync(mdDir, { recursive: true, force: true });
   });
 
-  runTest('1.8 蓝军对抗审查纪要 (Decision Dossier) 导出结构校验', () => {
+  runTest('1.8 方案压力测试备忘录 (Decision Dossier) 导出结构校验', () => {
     const entry = store.recordPrediction({
       target: '单页纪要导出测试',
       lens: 'compliance',
@@ -270,7 +270,7 @@ try {
     });
 
     const dossier = store.exportDossier(entry.id);
-    assert(dossier.includes('# 🛡️ 蓝军对抗审查纪要 (Decision Dossier)'), '纪要必须包含标准标题');
+    assert(dossier.includes('# 🛡️ 方案压力测试备忘录 (Decision Dossier)'), '纪要必须包含标准标题');
     assert(dossier.includes(entry.target), '纪要必须包含方案名称');
     assert(dossier.includes('合规红线 (Compliance)'), '纪要必须包含透镜名称');
     assert(dossier.includes(entry.prediction), '纪要必须包含核心预测');
@@ -448,7 +448,7 @@ runTest('3.9 bin 字段完整注册 dialectic 与 dialectic-mcp', () => {
 runTest('3.10 SKILL.md 覆盖微赌注、差评搜索语法与决策纪要模板', () => {
   assert(skillContent.includes('微赌注 (Micro-Bets)'), '必须包含微赌注指导');
   assert(skillContent.includes('差评搜索黄金语法'), '必须包含差评搜索语法');
-  assert(skillContent.includes('蓝军对抗审查纪要 (Decision Dossier)'), '必须包含纪要模板');
+  assert(skillContent.includes('方案压力测试备忘录 (Decision Dossier)'), '必须包含纪要模板');
   assert(skillContent.includes('【打脸成功】'), '必须包含打脸激励');
 });
 
