@@ -55,6 +55,7 @@ declare class LedgerStore {
         mdPath: string;
     };
     private loadData;
+    private atomicWriteFileSync;
     private saveData;
     private importFromMarkdownIfEmpty;
     private syncMarkdown;
@@ -79,6 +80,7 @@ declare class LedgerStore {
         correctionReason?: string;
     }): LedgerEntry;
     getStats(): LedgerStats;
+    exportDossier(id: string): string;
 }
 
 declare function createMcpServer(customDir?: string): {

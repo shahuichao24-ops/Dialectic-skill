@@ -17,9 +17,29 @@ async function main() {
   const store = new LedgerStore();
 
   if (command === 'board') {
+    const isCard = args.includes('--card');
     const stats = store.getStats();
     const debts = store.getDebts();
     const paths = store.getPaths();
+
+    if (isCard) {
+      console.log(`
+┌──────────────────────────────────────────────────────────────┐
+│  🛡️  DIALECTIC BATTLE CARD · 驳真对决战报                      │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  🔥 累计决策过招 : ${String(stats.total).padEnd(4)} 条                                 │
+│  🎉 成功打脸 AI  : ${String(stats.falsified).padEnd(4)} 次 (突破保守推演，勇者胜)             │
+│  🛡️ 蓝军避坑命中 : ${String(stats.verified).padEnd(4)} 次 (提前标记并拦截暗礁)             │
+│  🎁 待开箱盲盒   : ${String(stats.overdue).padEnd(4)} 条 (到期等待揭晓)                   │
+│                                                              │
+│  📊 AI 综合命中率: ${stats.hitRate !== null ? `${stats.hitRate.toFixed(1)}%` : '-'}                                    │
+│                                                              │
+│  “30 秒替你找破绽，30 天陪你见真章”                          │
+└──────────────────────────────────────────────────────────────┘
+`);
+      return;
+    }
 
     console.log(`
 ┌──────────────────────────────────────────────────────────────┐
@@ -144,16 +164,32 @@ async function main() {
     return;
   }
 
+  if (command === 'dossier') {
+    const targetId = args[1];
+    if (!targetId) {
+      console.log(`\n❌ 请提供留痕记录 ID，例如: dialectic dossier 20260928-01\n`);
+      return;
+    }
+    try {
+      const doc = store.exportDossier(targetId);
+      console.log(`\n${doc}\n`);
+    } catch (err: any) {
+      console.error(`\n❌ 导出失败: ${err.message}\n`);
+    }
+    return;
+  }
+
   console.log(`
 🛡️ Dialectic CLI - 驳真决策审查引擎
 
 使用方法:
-  dialectic [mcp]       启动 MCP Server (供 Cursor / Claude Code 连接)
-  dialectic board       查看实战预测命中率与战绩看板
-  dialectic list        列出待观察与逾期留痕清单
-  dialectic scout <URL> 零内存轻量嗅探竞品或产品网页情报
-  dialectic init        自动在当前工程配置 Cursor MCP
-  dialectic --help      查看帮助
+  dialectic [mcp]           启动 MCP Server (供 Cursor / Claude Code 连接)
+  dialectic board [--card]  查看实战预测命中率与战绩看板 (加 --card 输出对决战报)
+  dialectic list            列出待观察与逾期留痕清单
+  dialectic dossier <ID>    导出指定方案的 1 页【蓝军对抗审查纪要】
+  dialectic scout <URL>     零内存轻量嗅探竞品或产品网页情报
+  dialectic init            自动在当前工程配置 Cursor MCP
+  dialectic --help          查看帮助
 `);
 }
 

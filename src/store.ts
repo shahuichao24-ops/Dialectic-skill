@@ -83,9 +83,15 @@ export class LedgerStore {
     }
   }
 
+  private atomicWriteFileSync(filePath: string, content: string): void {
+    const tempPath = `${filePath}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2, 8)}.tmp`;
+    fs.writeFileSync(tempPath, content, 'utf-8');
+    fs.renameSync(tempPath, filePath);
+  }
+
   private saveData(data: LedgerData): void {
-    // 写入 JSON 保证机器可读与数据强一致
-    fs.writeFileSync(this.jsonPath, JSON.stringify(data, null, 2), 'utf-8');
+    // 原子写入 JSON 保证机器可读与数据强一致（抗并发写入与进程崩溃破坏）
+    this.atomicWriteFileSync(this.jsonPath, JSON.stringify(data, null, 2));
     // 同步渲染为人性化的 Markdown 账本
     this.syncMarkdown(data);
   }
@@ -206,7 +212,7 @@ export class LedgerStore {
       ``,
     ].join('\n');
 
-    fs.writeFileSync(this.mdPath, mdContent, 'utf-8');
+    this.atomicWriteFileSync(this.mdPath, mdContent);
   }
 
   private formatLens(lens: LensType): string {
@@ -403,5 +409,52 @@ export class LedgerStore {
       externalDisruptionRate,
       insufficientSampleRate,
     };
+  }
+
+  // 导出单项留痕的 1 页【蓝关对抗审查纪要】
+  public exportDossier(id: string): string {
+    const data = this.loadData();
+    const entry = data.entries.find((e) => e.id === id);
+    if (!entry) {
+      throw new Error(`未找到 ID 为 ${id} 的留痕记录`);
+    }
+
+    const lines = [
+      `# 🛡️ 蓝军对抗审查纪要 (Decision Dossier)`,
+      ``,
+      `> 方案名称：**${entry.target}**  `,
+      `> 留痕编号：\`${entry.id}\` ｜ 审查时间：${entry.createdAt.replace('T', ' ').slice(0, 16)} ｜ 观察窗口：至 ${entry.windowEnd}`,
+      ``,
+      `---`,
+      ``,
+      `## 1. 审查透镜与核心推演`,
+      `- **审查透镜**：${this.formatLens(entry.lens)}`,
+      `- **核心预测**：${entry.prediction}`,
+      `- **输赢反例边界**：${entry.failureCondition}`,
+      `- **触发动作预案**：${entry.triggerAction}`,
+      ``,
+      `## 2. 状态与审计对账`,
+      `- **当前状态**：${entry.status === 'resolved' ? '已核销结案' : '待观察中 (Active Pending)'}`,
+      `- **对账结果**：${entry.resolution}`,
+      `- **归因说明**：${entry.attribution || 'none'}`,
+    ];
+
+    if (entry.resolvedAt) {
+      lines.push(`- **核销时间**：${entry.resolvedAt.replace('T', ' ').slice(0, 16)}`);
+    }
+
+    if (entry.auditLog && entry.auditLog.length > 0) {
+      lines.push(
+        `- **变更审计链**：\n${entry.auditLog.map((a) => `  - ${a.changedAt.slice(0, 10)}: 由 ${a.previousResolution} 变更为 ${a.newResolution} (原因: ${a.reason})`).join('\n')}`
+      );
+    }
+
+    lines.push(
+      ``,
+      `---`,
+      `*本纪要由 Dialectic 引擎自动生成，可直接附入 PRD 决策章节或立项评审备忘录。*`
+    );
+
+    return lines.join('\n');
   }
 }

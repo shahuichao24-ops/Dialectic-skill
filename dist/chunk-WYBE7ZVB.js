@@ -71,8 +71,13 @@ var LedgerStore = class {
       return { version: 1, entries: [] };
     }
   }
+  atomicWriteFileSync(filePath, content) {
+    const tempPath = `${filePath}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2, 8)}.tmp`;
+    fs.writeFileSync(tempPath, content, "utf-8");
+    fs.renameSync(tempPath, filePath);
+  }
   saveData(data) {
-    fs.writeFileSync(this.jsonPath, JSON.stringify(data, null, 2), "utf-8");
+    this.atomicWriteFileSync(this.jsonPath, JSON.stringify(data, null, 2));
     this.syncMarkdown(data);
   }
   importFromMarkdownIfEmpty(data) {
@@ -183,7 +188,7 @@ var LedgerStore = class {
       archived.length > 0 ? archived.map(renderEntry).join("\n\n") : `*(\u6682\u65E0)*`,
       ``
     ].join("\n");
-    fs.writeFileSync(this.mdPath, mdContent, "utf-8");
+    this.atomicWriteFileSync(this.mdPath, mdContent);
   }
   formatLens(lens) {
     switch (lens) {
@@ -331,6 +336,48 @@ var LedgerStore = class {
       externalDisruptionRate,
       insufficientSampleRate
     };
+  }
+  // 导出单项留痕的 1 页【蓝关对抗审查纪要】
+  exportDossier(id) {
+    const data = this.loadData();
+    const entry = data.entries.find((e) => e.id === id);
+    if (!entry) {
+      throw new Error(`\u672A\u627E\u5230 ID \u4E3A ${id} \u7684\u7559\u75D5\u8BB0\u5F55`);
+    }
+    const lines = [
+      `# \u{1F6E1}\uFE0F \u84DD\u519B\u5BF9\u6297\u5BA1\u67E5\u7EAA\u8981 (Decision Dossier)`,
+      ``,
+      `> \u65B9\u6848\u540D\u79F0\uFF1A**${entry.target}**  `,
+      `> \u7559\u75D5\u7F16\u53F7\uFF1A\`${entry.id}\` \uFF5C \u5BA1\u67E5\u65F6\u95F4\uFF1A${entry.createdAt.replace("T", " ").slice(0, 16)} \uFF5C \u89C2\u5BDF\u7A97\u53E3\uFF1A\u81F3 ${entry.windowEnd}`,
+      ``,
+      `---`,
+      ``,
+      `## 1. \u5BA1\u67E5\u900F\u955C\u4E0E\u6838\u5FC3\u63A8\u6F14`,
+      `- **\u5BA1\u67E5\u900F\u955C**\uFF1A${this.formatLens(entry.lens)}`,
+      `- **\u6838\u5FC3\u9884\u6D4B**\uFF1A${entry.prediction}`,
+      `- **\u8F93\u8D62\u53CD\u4F8B\u8FB9\u754C**\uFF1A${entry.failureCondition}`,
+      `- **\u89E6\u53D1\u52A8\u4F5C\u9884\u6848**\uFF1A${entry.triggerAction}`,
+      ``,
+      `## 2. \u72B6\u6001\u4E0E\u5BA1\u8BA1\u5BF9\u8D26`,
+      `- **\u5F53\u524D\u72B6\u6001**\uFF1A${entry.status === "resolved" ? "\u5DF2\u6838\u9500\u7ED3\u6848" : "\u5F85\u89C2\u5BDF\u4E2D (Active Pending)"}`,
+      `- **\u5BF9\u8D26\u7ED3\u679C**\uFF1A${entry.resolution}`,
+      `- **\u5F52\u56E0\u8BF4\u660E**\uFF1A${entry.attribution || "none"}`
+    ];
+    if (entry.resolvedAt) {
+      lines.push(`- **\u6838\u9500\u65F6\u95F4**\uFF1A${entry.resolvedAt.replace("T", " ").slice(0, 16)}`);
+    }
+    if (entry.auditLog && entry.auditLog.length > 0) {
+      lines.push(
+        `- **\u53D8\u66F4\u5BA1\u8BA1\u94FE**\uFF1A
+${entry.auditLog.map((a) => `  - ${a.changedAt.slice(0, 10)}: \u7531 ${a.previousResolution} \u53D8\u66F4\u4E3A ${a.newResolution} (\u539F\u56E0: ${a.reason})`).join("\n")}`
+      );
+    }
+    lines.push(
+      ``,
+      `---`,
+      `*\u672C\u7EAA\u8981\u7531 Dialectic \u5F15\u64CE\u81EA\u52A8\u751F\u6210\uFF0C\u53EF\u76F4\u63A5\u9644\u5165 PRD \u51B3\u7B56\u7AE0\u8282\u6216\u7ACB\u9879\u8BC4\u5BA1\u5907\u5FD8\u5F55\u3002*`
+    );
+    return lines.join("\n");
   }
 };
 
@@ -682,11 +729,28 @@ function createMcpServer(customDir) {
         });
         const parsed = schema.parse(args);
         const reconciled = store.reconcileDebt(parsed);
+        let impactMessage = "";
+        if (reconciled.resolution === "falsified") {
+          impactMessage = `
+\u{1F389} \u3010\u6253\u8138\u6210\u529F\u3011\u4F60\u6210\u529F\u63A8\u7FFB\u4E86 AI \u84DD\u519B\u7684\u4FDD\u5B88\u63A8\u6F14\uFF01AI \u547D\u4E2D\u7387\u770B\u677F\u5DF2\u8BB0\u5F55 1 \u6B21\u6253\u8138\uFF08\u52C7\u8005\u80DC\uFF09\u3002`;
+        } else if (reconciled.resolution === "verified") {
+          impactMessage = `
+\u{1F6E1}\uFE0F \u3010\u907F\u5751\u547D\u4E2D\u3011\u84DD\u519B\u9884\u8B66\u547D\u4E2D\uFF01\u672C\u6B21\u51B3\u7B56\u63A8\u6F14\u6210\u529F\u63D0\u524D\u6807\u8BB0\u4E86\u6F5C\u5728\u6697\u7901\u3002`;
+        } else if (reconciled.resolution === "external_disruption") {
+          impactMessage = `
+\u26A1 \u3010\u5916\u90E8\u5E72\u6270\u5F52\u6863\u3011\u7A81\u53D1\u56E0\u679C\u963B\u65AD\u5DF2\u7559\u75D5\uFF0C\u5BA2\u89C2\u5254\u9664\u5206\u6BCD\uFF0C\u4E0D\u5F71\u54CD\u6218\u7EE9\u7EDF\u8BA1\u3002`;
+        } else if (reconciled.resolution === "unimplemented") {
+          impactMessage = `
+\u23F8\uFE0F \u3010\u672A\u6267\u884C\u5F52\u6863\u3011\u65B9\u6848\u672A\u4ED8\u8BF8\u6267\u884C\uFF0C\u5BA2\u89C2\u5254\u9664\u5206\u6BCD\uFF0C\u4E0D\u8BA1\u5165\u80DC\u7387\u7EDF\u8BA1\u3002`;
+        } else if (reconciled.resolution === "insufficient_sample") {
+          impactMessage = `
+\u23F3 \u3010\u6837\u672C\u4E0D\u8DB3\u3011\u8FD0\u884C\u5468\u671F\u8FC7\u77ED\uFF0C\u6570\u636E\u6682\u4E0D\u8DB3\u4EE5\u5B9A\u8BBA\uFF0C\u5DF2\u5B89\u5168\u5F52\u6863\u3002`;
+        }
         return {
           content: [
             {
               type: "text",
-              text: `[\u5BF9\u8D26\u6838\u9500\u6210\u529F] \u8BB0\u5F55 ${reconciled.id} \u5DF2\u6838\u9500\u4E3A\u3010${reconciled.resolution}\u3011\u5E76\u79FB\u5165 ## \u5DF2\u5F52\u6863 \u5206\u533A\u3002`
+              text: `[\u5BF9\u8D26\u6838\u9500\u6210\u529F] \u8BB0\u5F55 ${reconciled.id} \u5DF2\u6838\u9500\u4E3A\u3010${reconciled.resolution}\u3011\u5E76\u79FB\u5165 ## \u5DF2\u5F52\u6863 \u5206\u533A\u3002${impactMessage}`
             }
           ]
         };

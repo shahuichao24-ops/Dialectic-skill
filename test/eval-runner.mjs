@@ -229,7 +229,7 @@ try {
 - 审查对象：旧版状态字段功能
 - 审查透镜：功能必要 (Necessity)
 - 核心预测：若不做必卡死
-- 观察窗口：至 2026-10-01
+- 观察窗口：至 2099-10-01
 - 输赢边界：未卡死
 - 触发动作：记录
 - 对账状态：unverified
@@ -257,6 +257,48 @@ try {
     assert.strictEqual(debts.archivedCount, 1, '对账结果应能成功解析进 archived');
 
     fs.rmSync(mdDir, { recursive: true, force: true });
+  });
+
+  runTest('1.8 蓝军对抗审查纪要 (Decision Dossier) 导出结构校验', () => {
+    const entry = store.recordPrediction({
+      target: '单页纪要导出测试',
+      lens: 'compliance',
+      prediction: '未做三级标注必出合规风险',
+      windowDays: 7,
+      failureCondition: '无合规风险',
+      triggerAction: '补齐条文原文',
+    });
+
+    const dossier = store.exportDossier(entry.id);
+    assert(dossier.includes('# 🛡️ 蓝军对抗审查纪要 (Decision Dossier)'), '纪要必须包含标准标题');
+    assert(dossier.includes(entry.target), '纪要必须包含方案名称');
+    assert(dossier.includes('合规红线 (Compliance)'), '纪要必须包含透镜名称');
+    assert(dossier.includes(entry.prediction), '纪要必须包含核心预测');
+    assert(dossier.includes('输赢反例边界'), '纪要必须包含反例边界');
+  });
+
+  runTest('1.9 微赌注 (Micro-Bets) 灵活观察周期计算校验', () => {
+    const entry3d = store.recordPrediction({
+      target: '3天极速改动',
+      lens: 'necessity',
+      prediction: '首批点击不足',
+      windowDays: 3,
+      failureCondition: '点击超100',
+      triggerAction: '保留',
+    });
+    const entry14d = store.recordPrediction({
+      target: '14天排班周期',
+      lens: 'friction',
+      prediction: '排班抵触',
+      windowDays: 14,
+      failureCondition: '顺利',
+      triggerAction: '推行',
+    });
+
+    const d3 = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const d14 = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    assert.strictEqual(entry3d.windowEnd, d3, '3天周期计算必须精准');
+    assert.strictEqual(entry14d.windowEnd, d14, '14天周期计算必须精准');
   });
 } finally {
   fs.rmSync(tempDir, { recursive: true, force: true });
@@ -401,6 +443,18 @@ runTest('3.8 全链路版本号严格一致 (4.0.1)', () => {
 runTest('3.9 bin 字段完整注册 dialectic 与 dialectic-mcp', () => {
   assert(packageJson.bin['dialectic'], 'bin 必须包含 dialectic');
   assert(packageJson.bin['dialectic-mcp'], 'bin 必须包含 dialectic-mcp');
+});
+
+runTest('3.10 SKILL.md 覆盖微赌注、差评搜索语法与决策纪要模板', () => {
+  assert(skillContent.includes('微赌注 (Micro-Bets)'), '必须包含微赌注指导');
+  assert(skillContent.includes('差评搜索黄金语法'), '必须包含差评搜索语法');
+  assert(skillContent.includes('蓝军对抗审查纪要 (Decision Dossier)'), '必须包含纪要模板');
+  assert(skillContent.includes('【打脸成功】'), '必须包含打脸激励');
+});
+
+runTest('3.11 server.ts 包含对账核销的情绪激励与胜率博弈感反馈', () => {
+  assert(serverContent.includes('【打脸成功】'), 'server.ts 必须包含打脸激励反馈');
+  assert(serverContent.includes('【避坑命中】'), 'server.ts 必须包含避坑命中反馈');
 });
 
 // ==========================================

@@ -201,11 +201,24 @@ export function createMcpServer(customDir?: string) {
         const parsed = schema.parse(args);
         const reconciled = store.reconcileDebt(parsed);
 
+        let impactMessage = '';
+        if (reconciled.resolution === 'falsified') {
+          impactMessage = `\n🎉 【打脸成功】你成功推翻了 AI 蓝军的保守推演！AI 命中率看板已记录 1 次打脸（勇者胜）。`;
+        } else if (reconciled.resolution === 'verified') {
+          impactMessage = `\n🛡️ 【避坑命中】蓝军预警命中！本次决策推演成功提前标记了潜在暗礁。`;
+        } else if (reconciled.resolution === 'external_disruption') {
+          impactMessage = `\n⚡ 【外部干扰归档】突发因果阻断已留痕，客观剔除分母，不影响战绩统计。`;
+        } else if (reconciled.resolution === 'unimplemented') {
+          impactMessage = `\n⏸️ 【未执行归档】方案未付诸执行，客观剔除分母，不计入胜率统计。`;
+        } else if (reconciled.resolution === 'insufficient_sample') {
+          impactMessage = `\n⏳ 【样本不足】运行周期过短，数据暂不足以定论，已安全归档。`;
+        }
+
         return {
           content: [
             {
               type: 'text',
-              text: `[对账核销成功] 记录 ${reconciled.id} 已核销为【${reconciled.resolution}】并移入 ## 已归档 分区。`,
+              text: `[对账核销成功] 记录 ${reconciled.id} 已核销为【${reconciled.resolution}】并移入 ## 已归档 分区。${impactMessage}`,
             },
           ],
         };
